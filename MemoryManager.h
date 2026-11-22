@@ -21,6 +21,8 @@ private:
 public:
     MemoryManager(int memorySize);
 
+    bool isProcessAllocated(int pid) const;
+
     void firstFit(int pid, int size);
     void bestFit(int pid, int size);
     void worstFit(int pid, int size);
@@ -29,12 +31,11 @@ public:
 
     void displayMemory() const;
 
-    // GUI / Telemetry Getters
     const vector<MemoryBlock>& getMemoryBlocks() const { return memoryBlocks; }
     int getTotalMemory() const { return totalMemory; }
     int getUsedMemory() const;
     int getFreeMemory() const;
-    void resetMemory();
+    void resetMemory(int newTotalSize = -1);
 };
 
 #endif

@@ -79,9 +79,7 @@ const Processes = {
               </td>
               <td>
                 <div style="display:flex; gap:0.4rem;">
-                  <button class="btn btn-outline btn-sm" onclick="Processes.terminate(${p.pid})" title="Terminate process">
-                    Term
-                  </button>
+                  <button class="btn btn-outline btn-sm" onclick="Processes.terminate(${p.pid})" title="Terminate process">Terminated</button>
                   <button class="btn btn-danger btn-sm" onclick="Processes.delete(${p.pid})" title="Remove process">
                     ✕
                   </button>

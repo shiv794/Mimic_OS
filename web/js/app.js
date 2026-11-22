@@ -17,15 +17,18 @@ const App = {
     CPU.init();
     Scheduler.init();
     Memory.init();
+    Files.init();
+    Deadlock.init();
+    Terminal.init();
     Unified.init();
 
     // Initial data refresh
     this.refreshAll();
 
-    // Periodic live status polling (every 2.5s)
+    // Periodic live status polling (every 3.0s)
     this.pollingTimer = setInterval(() => {
       this.pollBackgroundTelemetry();
-    }, 2500);
+    }, 3000);
   },
 
   setupNavigation() {
@@ -64,6 +67,12 @@ const App = {
     if (viewId === 'processes') Processes.refresh();
     if (viewId === 'cpu') CPU.refresh();
     if (viewId === 'memory') Memory.refresh();
+    if (viewId === 'files') Files.refresh();
+    if (viewId === 'deadlock') Deadlock.refresh();
+    if (viewId === 'terminal') {
+      const inp = document.getElementById('terminal-input');
+      if (inp) setTimeout(() => inp.focus(), 100);
+    }
     if (viewId === 'dashboard') Dashboard.refresh();
   },
 
@@ -72,7 +81,9 @@ const App = {
       Dashboard.refresh(),
       Processes.refresh(),
       CPU.refresh(),
-      Memory.refresh()
+      Memory.refresh(),
+      Files.refresh(),
+      Deadlock.refresh()
     ]);
   },
 
@@ -83,6 +94,8 @@ const App = {
       if (this.currentView === 'cpu') await CPU.refresh();
       if (this.currentView === 'processes') await Processes.refresh();
       if (this.currentView === 'memory') await Memory.refresh();
+      if (this.currentView === 'files') await Files.refresh();
+      if (this.currentView === 'deadlock') await Deadlock.refresh();
     } catch (e) {
       // offline handled gracefully
     }
@@ -107,6 +120,8 @@ const App = {
         try {
           await API.resetProcesses();
           await API.resetMemory();
+          await API.resetFiles();
+          await API.loadDeadlockScenario('safe');
           this.showToast('Reset kernel state to default configuration', 'success');
           await this.refreshAll();
           Scheduler.resetSimulation();
@@ -119,7 +134,7 @@ const App = {
 
   setupKeyboardShortcuts() {
     window.addEventListener('keydown', (e) => {
-      // Do not trigger if user is typing in an input
+      // Do not trigger if user is typing in an input or textarea
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
         return;
       }
@@ -129,7 +144,10 @@ const App = {
       if (e.key === '3') this.navigateTo('cpu');
       if (e.key === '4') this.navigateTo('scheduler');
       if (e.key === '5') this.navigateTo('memory');
-      if (e.key === '6') this.navigateTo('unified');
+      if (e.key === '6') this.navigateTo('files');
+      if (e.key === '7') this.navigateTo('deadlock');
+      if (e.key === '8') this.navigateTo('terminal');
+      if (e.key === '9') this.navigateTo('unified');
 
       if (e.code === 'Space' && this.currentView === 'scheduler') {
         e.preventDefault();
@@ -170,4 +188,3 @@ const App = {
 document.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
-

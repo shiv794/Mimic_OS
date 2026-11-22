@@ -130,10 +130,11 @@ const API = {
     });
   },
 
-  async resetMemory() {
+  async resetMemory(totalSize) {
+    const payload = totalSize ? { totalSize: parseInt(totalSize, 10) } : {};
     return this.request('/api/memory/reset', {
       method: 'POST',
-      body: JSON.stringify({})
+      body: JSON.stringify(payload)
     });
   },
 
@@ -143,6 +144,93 @@ const API = {
       method: 'POST',
       body: JSON.stringify({ algorithm, quantum })
     });
+  },
+
+  // ================= File Management =================
+  async getFiles() {
+    return this.request('/api/files');
+  },
+
+  async createFile(name, directory = "/") {
+    return this.request('/api/files/create', {
+      method: 'POST',
+      body: JSON.stringify({ name, directory })
+    });
+  },
+
+  async deleteFile(name, directory = "") {
+    return this.request('/api/files/delete', {
+      method: 'POST',
+      body: JSON.stringify({ name, directory })
+    });
+  },
+
+  async writeFile(name, content, directory = "") {
+    return this.request('/api/files/write', {
+      method: 'POST',
+      body: JSON.stringify({ name, content, directory })
+    });
+  },
+
+  async readFile(name, directory = "") {
+    return this.request('/api/files/read', {
+      method: 'POST',
+      body: JSON.stringify({ name, directory })
+    });
+  },
+
+  async createDirectory(name) {
+    return this.request('/api/directories/create', {
+      method: 'POST',
+      body: JSON.stringify({ name })
+    });
+  },
+
+  async deleteDirectory(name) {
+    return this.request('/api/directories/delete', {
+      method: 'POST',
+      body: JSON.stringify({ name })
+    });
+  },
+
+  async resetFiles() {
+    return this.request('/api/files/reset', {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+  },
+
+  // ================= Deadlock Detection =================
+  async getDeadlock() {
+    return this.request('/api/deadlock');
+  },
+
+  async detectDeadlock() {
+    return this.request('/api/deadlock/detect', {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+  },
+
+  async loadDeadlockScenario(scenario) {
+    return this.request('/api/deadlock/scenario', {
+      method: 'POST',
+      body: JSON.stringify({ scenario })
+    });
+  },
+
+  async updateDeadlock(data) {
+    return this.request('/api/deadlock/update', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  // ================= Custom Mimic OS Shell =================
+  async executeShell(command) {
+    return this.request('/api/shell/execute', {
+      method: 'POST',
+      body: JSON.stringify({ command })
+    });
   }
 };
-

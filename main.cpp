@@ -5,6 +5,9 @@
 #include "CPU.h"
 #include "Scheduler.h"
 #include "MemoryManager.h"
+#include "FileManager.h"
+#include "DeadlockManager.h"
+#include "Shell.h"
 #include "HttpServer.h"
 
 using namespace std;
@@ -28,6 +31,9 @@ int main(int argc, char* argv[])
     CPU cpu;
     Scheduler scheduler(&manager, &cpu);
     MemoryManager memory(1024);
+    FileManager files;
+    DeadlockManager deadlock;
+    Shell shell(&manager, &cpu, &scheduler, &memory, &files, &deadlock);
 
     // Default processes
     manager.createProcess(1, "P1", 0, 5, 2);
@@ -39,14 +45,17 @@ int main(int argc, char* argv[])
     do
     {
         cout << "\n========== MIMIC OS ==========\n";
-        cout << "1. Create Process\n";
-        cout << "2. Display Processes\n";
-        cout << "3. Display PCBs\n";
-        cout << "4. CPU Status\n";
-        cout << "5. CPU Scheduling\n";
-        cout << "6. Memory Management\n";
-        cout << "7. Launch Interactive Web GUI (http://localhost:8080)\n";
-        cout << "8. Exit\n";
+        cout << "1.  Create Process\n";
+        cout << "2.  Display Processes\n";
+        cout << "3.  Display PCBs\n";
+        cout << "4.  CPU Status\n";
+        cout << "5.  CPU Scheduling\n";
+        cout << "6.  Memory Management\n";
+        cout << "7.  File Management (Virtual File System)\n";
+        cout << "8.  Deadlock Detection\n";
+        cout << "9.  Mimic OS Interactive Shell\n";
+        cout << "10. Launch Interactive Web GUI (http://localhost:8080)\n";
+        cout << "11. Exit\n";
         cout << "Enter choice: ";
         cin >> choice;
 
@@ -61,19 +70,14 @@ int main(int argc, char* argv[])
             int priority;
 
             cout << "\n--- Create New Process ---\n";
-
             cout << "Enter Process ID: ";
             cin >> pid;
-
             cout << "Enter Process Name: ";
             cin >> name;
-
             cout << "Enter Arrival Time: ";
             cin >> arrivalTime;
-
             cout << "Enter Burst Time: ";
             cin >> burstTime;
-
             cout << "Enter Priority: ";
             cin >> priority;
 
@@ -84,7 +88,6 @@ int main(int argc, char* argv[])
             }
 
             manager.createProcess(pid, name, arrivalTime, burstTime, priority);
-
             cout << "Process created successfully.\n";
             break;
         }
@@ -104,7 +107,6 @@ int main(int argc, char* argv[])
         case 5:
         {
             int option;
-
             cout << "\n--- CPU Scheduling ---\n";
             cout << "1. FCFS\n";
             cout << "2. SJF\n";
@@ -118,41 +120,32 @@ int main(int argc, char* argv[])
             case 1:
                 scheduler.FCFS();
                 break;
-
             case 2:
                 scheduler.SJF();
                 break;
-
             case 3:
                 scheduler.PriorityScheduling();
                 break;
-
             case 4:
             {
                 int quantum;
-
                 cout << "Enter time quantum: ";
                 cin >> quantum;
-
                 if (quantum > 0)
                     scheduler.RoundRobin(quantum);
                 else
                     cout << "Quantum must be positive.\n";
-
                 break;
             }
-
             default:
                 cout << "Invalid choice.\n";
             }
-
             break;
         }
 
         case 6:
         {
             int option;
-
             cout << "\n--- Memory Management ---\n";
             cout << "1. First Fit\n";
             cout << "2. Best Fit\n";
@@ -169,10 +162,8 @@ int main(int argc, char* argv[])
             case 3:
             {
                 int pid, size;
-
                 cout << "Enter process ID: ";
                 cin >> pid;
-
                 cout << "Enter memory required (MB): ";
                 cin >> size;
 
@@ -188,33 +179,147 @@ int main(int argc, char* argv[])
                     memory.bestFit(pid, size);
                 else
                     memory.worstFit(pid, size);
-
                 break;
             }
-
             case 4:
                 memory.displayMemory();
                 break;
-
             case 5:
             {
                 int pid;
-
                 cout << "Enter process ID to free: ";
                 cin >> pid;
-
                 memory.freeMemory(pid);
                 break;
             }
-
             default:
                 cout << "Invalid choice.\n";
             }
-
             break;
         }
 
         case 7:
+        {
+            int option;
+            cout << "\n--- File Management ---\n";
+            cout << "1. List Files\n";
+            cout << "2. List Directories\n";
+            cout << "3. Create File\n";
+            cout << "4. Read File\n";
+            cout << "5. Write to File\n";
+            cout << "6. Delete File\n";
+            cout << "7. Create Directory\n";
+            cout << "8. Delete Directory\n";
+            cout << "Enter choice: ";
+            cin >> option;
+
+            switch (option)
+            {
+            case 1:
+                files.listFiles();
+                break;
+            case 2:
+                files.listDirectories();
+                break;
+            case 3:
+            {
+                string name;
+                cout << "Enter file name: ";
+                cin >> name;
+                files.createFile(name);
+                break;
+            }
+            case 4:
+            {
+                string name;
+                cout << "Enter file name: ";
+                cin >> name;
+                files.readFile(name);
+                break;
+            }
+            case 5:
+            {
+                string name, content;
+                cout << "Enter file name: ";
+                cin >> name;
+                cout << "Enter file content: ";
+                cin.ignore();
+                getline(cin, content);
+                files.writeFile(name, content);
+                break;
+            }
+            case 6:
+            {
+                string name;
+                cout << "Enter file name to delete: ";
+                cin >> name;
+                files.deleteFile(name);
+                break;
+            }
+            case 7:
+            {
+                string name;
+                cout << "Enter directory name: ";
+                cin >> name;
+                files.createDirectory(name);
+                break;
+            }
+            case 8:
+            {
+                string name;
+                cout << "Enter directory name to delete: ";
+                cin >> name;
+                files.deleteDirectory(name);
+                break;
+            }
+            default:
+                cout << "Invalid choice.\n";
+            }
+            break;
+        }
+
+        case 8:
+        {
+            int option;
+            cout << "\n--- Deadlock Detection ---\n";
+            cout << "1. Display Resource Matrices\n";
+            cout << "2. Detect Deadlock\n";
+            cout << "3. Load Safe Scenario\n";
+            cout << "4. Load Deadlock Scenario\n";
+            cout << "Enter choice: ";
+            cin >> option;
+
+            switch (option)
+            {
+            case 1:
+                deadlock.display();
+                break;
+            case 2:
+                deadlock.detectDeadlock();
+                break;
+            case 3:
+                deadlock.loadSafeScenario();
+                cout << "Safe scenario loaded.\n";
+                deadlock.display();
+                break;
+            case 4:
+                deadlock.loadDeadlockScenario();
+                cout << "Deadlock scenario loaded.\n";
+                deadlock.display();
+                break;
+            default:
+                cout << "Invalid choice.\n";
+            }
+            break;
+        }
+
+        case 9:
+        {
+            shell.start();
+            break;
+        }
+
+        case 10:
         {
             cout << "\n[Mimic OS] Starting Interactive Web GUI at http://localhost:8080...\n";
             ShellExecuteA(NULL, "open", "http://localhost:8080", NULL, NULL, SW_SHOWNORMAL);
@@ -223,7 +328,7 @@ int main(int argc, char* argv[])
             break;
         }
 
-        case 8:
+        case 11:
             cout << "Exiting Mimic OS...\n";
             break;
 
@@ -231,8 +336,7 @@ int main(int argc, char* argv[])
             cout << "Invalid choice. Try again.\n";
         }
 
-    } while (choice != 8);
+    } while (choice != 11);
 
     return 0;
 }
-

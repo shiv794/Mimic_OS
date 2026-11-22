@@ -15,6 +15,11 @@ const Memory = {
     if (btnReset) {
       btnReset.addEventListener('click', () => this.handleReset());
     }
+
+    const btnConfigure = document.getElementById('btn-mem-configure');
+    if (btnConfigure) {
+      btnConfigure.addEventListener('click', () => this.handleConfigureTotal());
+    }
   },
 
   async refresh() {
@@ -31,11 +36,20 @@ const Memory = {
     if (!this.currentMemoryData) return;
     const { totalMemory, usedMemory, freeMemory, blocks } = this.currentMemoryData;
 
-    // Update summary pills
+    // Update summary pills & labels
+    const elTotal = document.getElementById('mem-view-total');
     const elUsed = document.getElementById('mem-view-used');
     const elFree = document.getElementById('mem-view-free');
+    const titleMap = document.getElementById('title-memory-map');
+    const inputTotal = document.getElementById('input-total-ram');
+    const inputMemSize = document.getElementById('input-mem-size');
+
+    if (elTotal) elTotal.textContent = `${totalMemory} MB`;
     if (elUsed) elUsed.textContent = `${usedMemory} MB`;
     if (elFree) elFree.textContent = `${freeMemory} MB`;
+    if (titleMap) titleMap.textContent = `Physical Memory Map (${totalMemory} MB Contiguous RAM)`;
+    if (inputTotal && document.activeElement !== inputTotal) inputTotal.value = totalMemory;
+    if (inputMemSize) inputMemSize.max = totalMemory;
 
     // 1. Proportional Memory Map Bar
     const bar = document.getElementById('memory-map-bar');
@@ -116,13 +130,13 @@ const Memory = {
         App.showToast(`Allocated ${size} MB to P${pid} via ${algo}`, 'success');
       } else {
         if (explainerTag) {
-          explainerTag.textContent = 'ALLOCATION FAILED';
+          explainerTag.textContent = 'ALLOCATION REJECTED';
           explainerTag.className = 'card-tag badge-danger';
         }
         if (explainer) {
-          explainer.innerHTML = `<span style="color:var(--accent-danger)"><strong>Out of Memory:</strong> ${res.explanation}</span>`;
+          explainer.innerHTML = `<span style="color:var(--accent-danger)"><strong>Allocation Denied:</strong> ${res.explanation || res.message}</span>`;
         }
-        App.showToast('Not enough contiguous memory', 'error');
+        App.showToast(res.message || 'Allocation rejected', 'error');
       }
 
       await this.refresh();
@@ -153,17 +167,40 @@ const Memory = {
 
   async handleReset() {
     try {
-      await API.resetMemory();
+      const total = this.currentMemoryData ? this.currentMemoryData.totalMemory : 1024;
+      await API.resetMemory(total);
       const explainer = document.getElementById('mem-explanation-text');
       if (explainer) {
-        explainer.textContent = 'Physical RAM reset: All allocations cleared. Contiguous single hole of 1024 MB restored at address 0x0000.';
+        explainer.textContent = `Physical RAM reset: All allocations cleared. Contiguous single hole of ${total} MB restored at address 0x0000.`;
       }
-      App.showToast('Physical memory reset to 1024 MB', 'info');
+      App.showToast(`Physical memory reset to ${total} MB`, 'info');
       await this.refresh();
       await Dashboard.refresh();
     } catch (err) {
       App.showToast('Failed to reset memory', 'error');
     }
+  },
+
+  async handleConfigureTotal() {
+    const inputTotal = document.getElementById('input-total-ram');
+    const newTotal = inputTotal ? parseInt(inputTotal.value, 10) : 1024;
+
+    if (isNaN(newTotal) || newTotal < 16) {
+      App.showToast('Please enter a valid memory size (at least 16 MB)', 'error');
+      return;
+    }
+
+    try {
+      await API.resetMemory(newTotal);
+      const explainer = document.getElementById('mem-explanation-text');
+      if (explainer) {
+        explainer.textContent = `Total physical memory reconfigured to ${newTotal} MB. Clean contiguous hole established at address 0x0000.`;
+      }
+      App.showToast(`Total RAM reconfigured to ${newTotal} MB!`, 'success');
+      await this.refresh();
+      await Dashboard.refresh();
+    } catch (err) {
+      App.showToast('Failed to reconfigure total memory', 'error');
+    }
   }
 };
-
